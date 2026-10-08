@@ -1,0 +1,42 @@
+ R←Test_009(debugFlag batchFlag);⎕TRAP;key;ps;query;lines;iconUri;i
+⍝ Exercise the whole chain with `toast.ps1` doing its job. Whether a toast really appeared on
+⍝ the screen is something only a human can tell, so this test asks.
+⍝ The icon needs no human: `toast.ps1` registers it, so it can be read back.
+ ⎕TRAP←(999 'C' '∘∘∘ ⍝ Deliberate error')(0 'N')
+ R←T._Failed
+
+ :If batchFlag
+     R←T._NoBatchTest ⋄ →0
+ :ElseIf 'Win'≢3↑⊃# ⎕WG'APLVersion'
+     R←T._WindowsOnly ⋄ →0
+ :EndIf
+
+ →T.GoToTidyUp 0=##.WindowsToast.⎕NC'TatinVars'   ⍝ `tatinVars` in the Cider config puts it where a loaded package has it
+
+ key←'HKCU:\SOFTWARE\Classes\AppUserModelId\Dyalog.APL.CommTools'   ⍝ The app ID `toast.ps1` registers
+ ps←'powershell.exe -NoProfile -NonInteractive -Command '
+ query←ps,'"(Get-ItemProperty -LiteralPath ''',key,''' -ErrorAction SilentlyContinue).IconUri"'
+ ⍝ Away with whatever an earlier run registered, so the check below cannot pass on a leftover
+ {}⎕CMD ps,'"Remove-ItemProperty -LiteralPath ''',key,''' -Name IconUri -ErrorAction SilentlyContinue"'
+
+ →T.GoToTidyUp~1 CommTools.YesOrNo'Test_009@Test_009: can you see this question in a toast?'
+
+ ⍝ The toast is fired and forgotten: `Notify` returned after 17 ms while `toast.ps1` took another
+ ⍝ 795 ms to reach the registry, so the value is waited for rather than read just once.
+ lines←⍬
+ :For i :In ⍳25
+     lines←⎕CMD query
+     :If 0<≢lines
+         :Leave
+     :EndIf
+     ⎕DL 0.2
+ :EndFor
+ →T.GoToTidyUp 0=≢lines                          ⍝ Five seconds, and nothing was registered at all
+ iconUri←⊃lines
+ →T.GoToTidyUp'.png'≢¯4↑iconUri                  ⍝ Windows shows no icon when this names an `.exe`
+ →T.GoToTidyUp~⎕NEXISTS iconUri
+
+ R←T._OK
+
+∆TidyUp:
+⍝Done

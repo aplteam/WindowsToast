@@ -1,0 +1,22 @@
+ R←Test_003(debugFlag batchFlag);⎕TRAP;ns;qdmx
+⍝ Exercise the optional left argument of `Notify`: with `noTrap` being 1 the error is not
+⍝ trapped but passed on, which is what makes the function debuggable.
+ ⎕TRAP←(999 'C' '∘∘∘ ⍝ Deliberate error')(0 'N')
+ R←T._Failed
+
+ ns←⎕NS''                                       ⍝ No `TatinVars` in here
+ {}ns.⎕FX ##.WindowsToast.⎕NR'Notify'
+
+ :Trap 6
+     {}1 ns.Notify'YesOrNo' 'Test_003: nobody should ever see this'
+     →T.GoToTidyUp 1                            ⍝ The error must have reached us
+ :Else
+     qdmx←⎕DMX
+     →T.GoToTidyUp 6≠qdmx.EN
+ :EndTrap
+ →T.GoToTidyUp 0≠ns.⎕NC'∆NotifyError'           ⍝ Nothing was trapped, so nothing was recorded
+
+ R←T._OK
+
+∆TidyUp:
+⍝Done

@@ -1,0 +1,37 @@
+ R←Test_007(debugFlag batchFlag);⎕TRAP;ns;assets;before;new;lines;question;file
+⍝ Exercise `Notify` with a question too long for a toast: it must be cut back to 200
+⍝ characters, the last three of them saying that something was cut off.
+⍝ The assets folder used here holds no `toast.ps1`, so nothing pops up and the file `Notify`
+⍝ wrote is still there to be inspected.
+ ⎕TRAP←(999 'C' '∘∘∘ ⍝ Deliberate error')(0 'N')
+ R←T._Failed
+
+ :If 'Win'≢3↑⊃# ⎕WG'APLVersion'
+     R←T._WindowsOnly ⋄ →0
+ :EndIf
+
+ new←⍬
+ assets←2 ⎕NQ'.' 'GetEnvironment' 'TEMP'
+ ns←⎕NS''
+ {}ns.⎕FX ##.WindowsToast.⎕NR'Notify'
+ {}'TatinVars'ns.⎕NS''
+ {}ns.TatinVars.⎕FX(' r←GetFullPath2AssetsFolder')(' r←''',assets,'''')
+
+ question←300⍴'Test_007 '
+ before←⊃0 1 ⎕NINFO⍠1⊢assets,'/dyalog-notify-*.txt'
+ {}ns.Notify'AskForText'question
+ new←(⊃0 1 ⎕NINFO⍠1⊢assets,'/dyalog-notify-*.txt')~before
+ →T.GoToTidyUp 1≠≢new
+ lines←⊃⎕NGET(⊃new)1
+ →T.GoToTidyUp 3≠≢lines
+ →T.GoToTidyUp 200≠≢2⊃lines
+ →T.GoToTidyUp'...'≢¯3↑2⊃lines
+ →T.GoToTidyUp(197↑question)≢197↑2⊃lines        ⍝ Everything up to the cut is untouched
+
+ R←T._OK
+
+∆TidyUp:
+ :For file :In new                              ⍝ `⎕NDELETE` is shy, so no `{}` here
+     ⎕NDELETE file
+ :EndFor
+⍝Done

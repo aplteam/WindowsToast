@@ -1,0 +1,10 @@
+ r←Version
+⍝ Returns the version number from `TatinVars.CONFIG`
+⍝ See also `History`
+ :If 0<⎕NC'TatinVars.CONFIG'
+     r←(⎕JSON⍠('Dialect' 'JSON5')⊢TatinVars.CONFIG).version
+ :Else
+⍝ When the code was loaded by neither Tatin nor Cider, there is no namespace `TatinVars`.
+⍝ In such cases we cannot provide a version number, so we return just ''.
+     r←''
+ :EndIf

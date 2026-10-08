@@ -1,0 +1,19 @@
+ {r}←{refToMakeHelpers}Make flag;C;cfg;path;parms;zipFilename;Cancelled;buff;cfg_orig;M
+ C←##.CiderConfig
+ cfg_orig←⎕SE.Tatin.GetPackageConfigFileAsNS C.HOME
+ {}⎕SE.UCMD'Tatin.PackageConfig "',C.HOME,'" -edit'
+ M←⎕SE.MakeHelpers
+ :If flag
+     cfg←⎕SE.Tatin.GetPackageConfigFileAsNS C.HOME
+     path←C.HOME,'/',C.CIDER.distributionFolder
+     M.RecreateFolder path
+     {}⎕SE.Tatin.CreateAPIfromCFG ##.WindowsToast cfg
+     parms←⎕SE.Tatin.CreateBuildParms C.HOME
+     parms.targetPath←C.CIDER.distributionFolder
+     parms.version←cfg.version
+     zipFilename←⎕SE.Tatin.BuildPackage parms
+     ⎕←'*** New version built successfully:',(⎕UCS 13),'   ',zipFilename
+ :Else
+     ⎕←'Cancelled by user'
+ :EndIf
+⍝Done

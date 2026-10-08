@@ -1,0 +1,43 @@
+ r←{noTrap}Notify(type message);body;file;icon;ps1;tag;title;⎕IO;⎕ML
+⍝ Fires a Windows toast notification.\\
+⍝ The toast is fired and forgotten: this function does not wait for it.
+⍝ `toast.ps1`, which lives in this package's assets folder, does the actual work.\\
+⍝ The caption of the notification is derived from `⎕WSID`. If that is empty or "CLEAR WS"
+⍝ the last part of the current directory becomes the caption.\\
+⍝ `type` and `message` must be strings, one of which might be empty:
+⍝ * If `message` is not empty it is shown; `type` is ignored
+⍝ * If message is empty and `type` is not, `type` is shown, followed by " is waiting for your input"
+⍝ If both are empty, calling this function makes no sense.\\
+⍝ The main caller is <https://github.com/aplteam/CommTools>, see there. When called by `CommTools`, `type`
+⍝ is one of `YesOrNo`, `AskForNumber`, `AskForText`, `Pause`, `Select`.
+⍝ `message` becomes the question, message or caption but might be empty (`Select`).\\
+⍝ Returns `⍬`.
+ ⎕IO←1 ⋄ ⎕ML←1   ⍝ This function might be fixed into any namespace
+ noTrap←{0<⎕NC ⍵:⍎⍵ ⋄ 0}'noTrap'
+ r←⍬
+ :Trap (~noTrap)/0   ⍝ `CommTools` does not trap errors, and a notification must never bring an application down
+     ps1←(TatinVars.GetFullPath2AssetsFolder),'/toast.ps1'
+     title←⎕WSID
+     :If (⊂title)∊'' 'CLEAR WS'
+         title←⊃⌽'/'(≠⊆⊢)¯1↓⊃1 ⎕NPARTS''   ⍝ No workspace, so the current directory identifies the session
+     :EndIf
+     body←message
+     :If 0=≢body
+         body←type,' is waiting for your input'
+     :EndIf
+     body[⍸body∊⎕UCS 13 10]←' '   ⍝ A toast carries a single piece of text
+     :If 200<≢body
+         body←(197↑body),'...'
+     :EndIf
+     icon←2 ⎕NQ'.' 'GetEnvironment' 'DYALOG'
+     :If 0<≢icon
+         icon,←'/dyalog.exe'
+     :EndIf
+     file←(2 ⎕NQ'.' 'GetEnvironment' 'TEMP'),'/dyalog-notify-',(∊⍕¨⎕TS),'.txt'
+     ((title body icon)'UTF-8')⎕NPUT file 1   ⍝ A nested left argument of three items would be read as (content encoding newline)
+     ⍝ "Hidden" keeps the console window that `powershell.exe` is given off the screen; without it it flashes up
+     {}⎕CMD('powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "',ps1,'" -From "',file,'"')'Hidden'
+ :Else
+     ∆NotifyError←⎕DMX   ⍝ Swallowed, but kept next to this function for diagnosis
+ :EndTrap
+⍝Done

@@ -1,0 +1,41 @@
+ R←Test_004(debugFlag batchFlag);⎕TRAP;⎕WSID;ns;assets;before;new;lines;question;file
+⍝ Exercise what `Notify` hands over to `toast.ps1`: a title that identifies the session, the
+⍝ question as the body, and the icon.
+⍝ The assets folder used here holds no `toast.ps1`, so nothing pops up and, because nobody
+⍝ reads it, the file `Notify` wrote is still there to be inspected.
+ ⎕TRAP←(999 'C' '∘∘∘ ⍝ Deliberate error')(0 'N')
+ R←T._Failed
+
+ :If 'Win'≢3↑⊃# ⎕WG'APLVersion'
+     R←T._WindowsOnly ⋄ →0
+ :EndIf
+
+ new←⍬
+ assets←2 ⎕NQ'.' 'GetEnvironment' 'TEMP'
+ ns←⎕NS''
+ {}ns.⎕FX ##.WindowsToast.⎕NR'Notify'
+ {}'TatinVars'ns.⎕NS''
+ {}ns.TatinVars.⎕FX(' r←GetFullPath2AssetsFolder')(' r←''',assets,'''')
+
+ question←'Test_004: delete /var/log/app.log?'
+ ⎕WSID←'Test_004_WS'                            ⍝ Localised in the header, so leaving undoes it
+ before←⊃0 1 ⎕NINFO⍠1⊢assets,'/dyalog-notify-*.txt'
+ {}ns.Notify'YesOrNo'question
+ new←(⊃0 1 ⎕NINFO⍠1⊢assets,'/dyalog-notify-*.txt')~before
+ →T.GoToTidyUp 1≠≢new
+ lines←⊃⎕NGET(⊃new)1
+ →T.GoToTidyUp 3≠≢lines
+
+ →T.GoToTidyUp'Test_004_WS'≢⊃lines              ⍝ The workspace name identifies the session
+ →T.GoToTidyUp question≢2⊃lines
+ :If 0<≢3⊃lines                                 ⍝ The icon is empty when DYALOG is not set
+     →T.GoToTidyUp'dyalog.exe'≢¯10↑3⊃lines
+ :EndIf
+
+ R←T._OK
+
+∆TidyUp:
+ :For file :In new                          ⍝ `⎕NDELETE` is shy, so no `{}` here
+     ⎕NDELETE file
+ :EndFor
+⍝Done

@@ -1,0 +1,23 @@
+ R←Test_002(debugFlag batchFlag);⎕TRAP;ns;r
+⍝ `Notify` must never bring an application down, because `CommTools` does not trap errors in
+⍝ the notifier. Fixed into a namespace without a `TatinVars` it cannot find `toast.ps1`, and
+⍝ that failure must be swallowed, recorded in `∆NotifyError` and reported as `⍬`.
+ ⎕TRAP←(999 'C' '∘∘∘ ⍝ Deliberate error')(0 'N')
+ R←T._Failed
+
+ ns←⎕NS''                                       ⍝ No `TatinVars` in here
+ {}ns.⎕FX ##.WindowsToast.⎕NR'Notify'
+
+ :Trap 0   ⍝ Nothing at all may escape from `Notify`, so this catches everything
+     r←ns.Notify'YesOrNo' 'Test_002: nobody should ever see this'
+ :Else
+     →T.GoToTidyUp 1                            ⍝ An error escaped after all
+ :EndTrap
+ →T.GoToTidyUp ⍬≢r
+ →T.GoToTidyUp 0=ns.⎕NC'∆NotifyError'           ⍝ The error must have been kept for diagnosis
+ →T.GoToTidyUp 6≠ns.∆NotifyError.EN             ⍝ VALUE ERROR, because `TatinVars` is missing
+
+ R←T._OK
+
+∆TidyUp:
+⍝Done
